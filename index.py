@@ -110,3 +110,27 @@ def clean_and_transform(db):
     logger.info(f"nan_percent_new.sort_values\n {nan_percent_new.sort_values(ascending=False)}")
     return db_clean
 
+@task
+def happiness_score_descr_stat(db_clean):
+    logger = get_run_logger()
+    hap = db_clean["Happiness score"]
+    mean_data = np.mean(hap)
+    median_data = np.median(hap)
+    std_data = np.std(hap)
+
+    logger.info(f"mean_data: {mean_data}")
+    logger.info(f"median_data: {median_data}")
+    logger.info(f"std_data: {std_data}")
+
+    # mean happiness score grouped by year and by region.
+    year_group_mean = db_clean.groupby("Year")["Happiness score"].mean().sort_index()
+    logger.info(f"year_group_mean:\n {year_group_mean}")
+
+    reg_group_mean = db_clean.groupby("Regional indicator")["Happiness score"].mean().sort_values(ascending=False)
+    logger.info(f"reg_group_mean:\n {reg_group_mean}")
+
+    logger.info(f"Top region: {reg_group_mean.idxmax()} ({reg_group_mean.max()})")
+    logger.info(f"Worst region: {reg_group_mean.idxmin()} ({reg_group_mean.min()})")
+
+    return mean_data, median_data, std_data, year_group_mean, reg_group_mean
+
