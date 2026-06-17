@@ -243,3 +243,40 @@ def stats_second_test(db_clean):
 
     return t_stat, p_stat
 
+@task
+def value_pearson(db_clean):
+    logger = get_run_logger()
+
+    y = db_clean["Happiness score"] # Happiness score
+    int_col = db_clean.select_dtypes(include="number").columns # columns int
+
+    number_of_tests = 0 # total amount tests
+    summary = [] # col, corr, p_value
+
+    for col in int_col:
+        if col == "Happiness score" or col == "Year" or col == "Ranking": # came out
+            continue
+            
+        corr, p_value = pearsonr(db_clean[col], y)
+        logger.info(f"corr: {col} vs Happiness score")
+        logger.info(f"  correlation: {corr:.3f}, p-value: {p_value:.2e}")
+
+        number_of_tests += 1 # more one test
+        summary.append((col, corr, p_value)) # add
+
+    # logger.info(f"summary {summary[:5]}")
+        
+    logger.info(f"number_of_tests: {number_of_tests}")
+    adjusted_alpha = 0.05 / number_of_tests             # adjastment Bonferroni correction
+    logger.info(f"adjusted_alpha {adjusted_alpha:.5f}")
+
+    for col, corr, p_value in summary:
+        if p_value < adjusted_alpha:
+            logger.info(f"{col} is significant after Bonferroni correction")
+        elif p_value < 0.05:
+            logger.info(f"{col} is significant at alpha=0.05 but not after correction")
+        else:
+            logger.info(f"{col} is not significant")
+    
+    return summary, adjusted_alpha
+
