@@ -280,3 +280,60 @@ def value_pearson(db_clean):
     
     return summary, adjusted_alpha
 
+@task
+def summary_report(db_clean, adjusted_alpha, t_test_result, pearson_summary):
+    logger = get_run_logger()
+
+    # Total number of countries and years in the merged dataset.
+    total_number_of_countries = db_clean["Country"].nunique()
+    logger.info(f"total_number_of_countries: {total_number_of_countries}")
+
+    total_years = db_clean["Year"].nunique()
+    logger.info(f"total_years: {total_years}")
+
+    # The top 3 and bottom 3 regions by mean happiness score.
+    top_3_regions_by_mean_happiness_score = db_clean.groupby("Regional indicator")["Happiness score"].mean().sort_values(ascending=False).head(3)
+    logger.info(f"top_3_regions_by_mean_happiness_score: {top_3_regions_by_mean_happiness_score}")
+
+    bottom_3_regions_by_mean_happiness_score = db_clean.groupby("Regional indicator")["Happiness score"].mean().sort_values(ascending=True).head(3)
+    logger.info(f"bottom_3_regions_by_mean_happiness_score: {bottom_3_regions_by_mean_happiness_score}")
+
+    # The result of the pre/post-2020 t-test in plain language.
+    t_stat, p_stat, mean_2019, mean_2020 = t_test_result
+    if p_stat < 0.05:
+        if mean_2020 > mean_2019:
+            logger.info("Happiness scores increased significantly from 2019 to 2020.")
+        else:
+            logger.info("Happiness scores decreased significantly from 2019 to 2020.")
+    else:
+        logger.info("No statistically significant change in happiness scores between 2019 and 2020.")
+
+    # The variable most strongly correlated with happiness score (after Bonferroni correction).
+    significant_vars = []
+    for col, corr, p in pearson_summary:
+        if p < adjusted_alpha:
+            significant_vars.append((col, corr))
+
+    if significant_vars:
+        best_var, best_corr = None, None
+        max_corr = -1
+
+        for col, corr in significant_vars:
+            if abs(corr) > max_corr:
+                best_var = col
+                best_corr = corr
+                max_corr = abs(corr)
+
+        logger.info(f"Strongest correlated variable: {best_var} (r={best_corr:.3f})")
+    else:
+        logger.info("No variables remain significant after correction.")
+
+    return {
+        "total_number_of_countries": total_number_of_countries,
+        "total_years": total_years,
+        "top_3_regions_by_mean_happiness_score": top_3_regions_by_mean_happiness_score,
+        "bottom_3_regions_by_mean_happiness_score": bottom_3_regions_by_mean_happiness_score,
+        "t_test_2019_2020": t_test_result,
+        "most_correlated_variable": best_var if significant_vars else None
+    }
+
