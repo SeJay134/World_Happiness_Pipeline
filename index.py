@@ -166,3 +166,19 @@ def plot_box(db_clean):
     logger.info(f"plot_box")
     return path
 
+@task
+def gdp_vs_happ(db_clean):
+    logger = get_run_logger()
+    path = Path("outputs/gdp_vs_happiness.png")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(8, 5))
+    sns.scatterplot(data=db_clean, x = "GDP per capita", y = "Happiness score")
+    plt.title("The relationship between GDP per capita and happiness score")
+    plt.xlabel("GDP")
+    plt.ylabel("Happiness score")
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    logger.info(f"gdp_vs_happ")
+    return path
+
