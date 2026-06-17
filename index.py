@@ -16,3 +16,24 @@ def path_csv():
     if not files:
         raise FileNotFoundError("was not finded csv")
     return files
+
+@task(retries=3, retry_delay_seconds=2)
+def read_csv_file(files):
+    df = []
+    for file in files:
+        if file.suffix == ".csv":
+            try:
+                data = pd.read_csv(file, sep=";", on_bad_lines="skip")
+                year = file.stem
+                match = re.search(r"\d{4}", year)
+                if match:
+                    year = match.group()
+                    data["Year"] = int(year)
+                df.append(data)
+            except Exception as e:
+                print(f"error: {e}")
+    if not df:
+        raise ValueError("No valid CSV files were loaded")
+    
+    return pd.concat(df, ignore_index=True)
+
