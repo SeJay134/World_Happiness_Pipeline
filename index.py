@@ -218,3 +218,28 @@ def stats_test(db_clean):
     logger.info(f"t_stat: {t_stat:.5F}, p_stat: {p_stat:.5F}")
     return t_stat, p_stat, mean_2019, mean_2020
 
+@task
+def stats_second_test(db_clean):
+    logger = get_run_logger()
+    db_year = db_clean[db_clean["Year"].isin([2019, 2020])]
+    west_eur = db_year[db_year["Regional indicator"] == "Western Europe"]["Social support"].dropna()
+    # logger.info(f"west_eur: {west_eur[:5]}")
+    sub_suh_afr = db_year[db_year["Regional indicator"] == "Sub-Saharan Africa"]["Social support"].dropna()
+    # logger.info(f"sub_suh_afr: {sub_suh_afr[:5]}")
+
+    t_stat, p_stat = stats.ttest_ind(west_eur, sub_suh_afr, equal_var=False)
+    logger.info(f"t-statistic: {t_stat:.5f} p-value: {p_stat:.2e}")
+
+    mean_west = west_eur.mean()
+    mean_sub = sub_suh_afr.mean()
+
+    if p_stat < 0.05:
+        if mean_west > mean_sub:
+            logger.info(f"Social support in Western Europe is significantly higher than in Sub-Saharan Africa (2019–2020).")
+        else:
+            logger.info(f"Social support in Sub-Saharan Africa is significantly higher than in Western Europe (2019–2020).")
+    else:
+        logger.info(f"No statistically significant difference in social support between Western Europe and Sub-Saharan Africa (2019–2020).")
+
+    return t_stat, p_stat
+
