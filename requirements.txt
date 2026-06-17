@@ -3,6 +3,6 @@ numpy
 matplotlib
 scipy
 seaborn
-prefect
+prefect==2.14.20
 pathlib
 re
