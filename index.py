@@ -337,3 +337,48 @@ def summary_report(db_clean, adjusted_alpha, t_test_result, pearson_summary):
         "most_correlated_variable": best_var if significant_vars else None
     }
 
+@flow
+def data_pipeline():
+
+    logger = get_run_logger()
+    logger.info("\n")
+    logger.info("Task 1: Load Multiple Years of Data")
+    files = path_csv()
+    df_main = read_csv_file(files)
+    save_csv(df_main)
+    log_columns(df_main)
+    db_clean = clean_and_transform(df_main)
+
+    logger = get_run_logger()
+    logger.info("\n")
+    logger.info("Task 2: Descriptive Statistics")
+    happiness_score_descr_stat(db_clean)
+
+    logger = get_run_logger()
+    logger.info("\n")
+    logger.info("Task 3: Visual Exploration")
+    plot_hist(db_clean)
+    plot_box(db_clean)
+    gdp_vs_happ(db_clean)
+    corr_heatmap(db_clean)
+
+    logger = get_run_logger()
+    logger.info("\n")
+    logger.info("Task 4: Hypothesis Testing")
+    t_test_result = stats_test(db_clean)
+    stats_second_test(db_clean)
+
+    logger = get_run_logger()
+    logger.info("\n")
+    logger.info("Task 5: Correlation and Multiple Comparisons")
+    pearson_summary, adjusted_alpha = value_pearson(db_clean)
+
+    logger = get_run_logger()
+    logger.info("\n")
+    logger.info("Task 6: Summary Report")
+    summary_data = summary_report(db_clean, adjusted_alpha, t_test_result, pearson_summary)
+
+    return summary_data
+
+if __name__ == "__main__":
+    data_pipeline()
