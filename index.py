@@ -182,3 +182,18 @@ def gdp_vs_happ(db_clean):
     logger.info(f"gdp_vs_happ")
     return path
 
+@task
+def corr_heatmap(db_clean):
+    logger = get_run_logger()
+    corr_matrix = db_clean.corr(numeric_only=True)
+    path = Path("outputs/correlation_heatmap.png")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr_matrix, annot=True, cmap="coolwarm")
+    plt.title("Correlation Heatmap")
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    logger.info(f"corr_heatmap")
+    return path
+
