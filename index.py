@@ -37,3 +37,10 @@ def read_csv_file(files):
     
     return pd.concat(df, ignore_index=True)
 
+@task(retries=3, retry_delay_seconds=2)
+def save_csv(df):
+    path = Path("outputs/merged_happiness.csv")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(path, index=False)
+    return path
+
