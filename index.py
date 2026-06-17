@@ -17,7 +17,7 @@ logging.basicConfig(
     encoding="utf-8"
 )
 
-def get_logger(name: str):
+def get_run_logger(name: str):
     return logging.getLogger(name)
 
 @task(log_prints=True)
@@ -148,5 +148,21 @@ def plot_hist(db_clean):
     plt.close()
 
     logger.info(f"plot_hist")
+    return path
+
+@task
+def plot_box(db_clean):
+    logger = get_run_logger()
+    path = Path("outputs/happiness_by_year.png")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(8, 5))
+    sns.boxplot(data = db_clean, x = "Year", y = "Happiness score")
+    plt.title("Happiness score distributions across years")
+    plt.xlabel("Year")
+    plt.ylabel("Happiness score")
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    logger.info(f"plot_box")
     return path
 
