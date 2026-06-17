@@ -7,18 +7,18 @@ from scipy.stats import pearsonr
 import seaborn as sns
 from pathlib import Path
 import re
-import logging
+# import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    filename="app.log",
-    filemode="a",
-    encoding="utf-8"
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s | %(levelname)s | %(message)s",
+#     filename="app.log",
+#     filemode="a",
+#     encoding="utf-8"
+# )
 
-def get_run_logger(name: str):
-    return logging.getLogger(name)
+# def get_run_logger(name: str):
+#     return logging.getLogger(name)
 
 @task(log_prints=True)
 def path_csv():
