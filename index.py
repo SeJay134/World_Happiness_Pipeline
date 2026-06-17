@@ -7,6 +7,18 @@ from scipy.stats import pearsonr
 import seaborn as sns
 from pathlib import Path
 import re
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    filename="app.log",
+    filemode="a",
+    encoding="utf-8"
+)
+
+def get_logger(name: str):
+    return logging.getLogger(name)
 
 @task(log_prints=True)
 def path_csv():
@@ -43,4 +55,23 @@ def save_csv(df):
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False)
     return path
+
+@task
+def log_columns(df):
+    logger = get_run_logger()
+    logger.info(f"Columns:\n {list(df.columns)}")
+    logger.info(f"dtypes:\n {list(df.dtypes)}")
+    logger.info(f"len:\n {len(df)}")
+    logger.info(f"First 5 rows:\n {df.head()}")
+    logger.info(f"Last 5 rows:\n {df.tail()}")
+
+    if df.isna().sum().sum() > 0:
+        logger.warning("df has missed values")
+    
+    if df.empty:
+        logger.error("df is empty")
+
+    if df.duplicated().sum() > 0:
+        logger.error("df has dublicates")
+    return df
 
