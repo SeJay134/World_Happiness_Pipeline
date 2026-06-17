@@ -75,3 +75,38 @@ def log_columns(df):
         logger.error("df has dublicates")
     return df
 
+@task
+def clean_and_transform(db):
+    logger = get_run_logger()
+    db_clean = db.copy()
+    db_clean.columns = db_clean.columns.str.strip()
+    nan_percent = (db_clean.isna().sum() / len(db_clean) * 100).round(1)
+    logger.info(f"nan_percent.sort_values: {nan_percent.sort_values(ascending=False)}")
+
+    cols = ["Happiness score", "GDP per capita", "Social support", "Freedom to make life choices", "Generosity", "Perceptions of corruption"]
+
+    for col in cols:
+        db_clean[col] = (db_clean[col].astype(str).str.replace(",", ".", regex=False))
+
+    db_clean["Happiness score"] = pd.to_numeric(db_clean["Happiness score"], errors="coerce")
+    db_clean["GDP per capita"] = pd.to_numeric(db_clean["GDP per capita"], errors="coerce")
+    db_clean["Social support"] = pd.to_numeric(db_clean["Social support"], errors="coerce")
+    db_clean["Freedom to make life choices"] = pd.to_numeric(db_clean["Freedom to make life choices"], errors="coerce")
+    db_clean["Generosity"] = pd.to_numeric(db_clean["Generosity"], errors="coerce")
+    db_clean["Perceptions of corruption"] = pd.to_numeric(db_clean["Perceptions of corruption"], errors="coerce")
+    logger.info(f"db_clean.dtypes:\n {db_clean.dtypes}")
+
+    db_clean = db_clean.drop(columns=["Ladder score"], errors="ignore")
+
+    mode_val = db_clean["Regional indicator"].mode()
+    if not mode_val.empty:
+        db_clean["Regional indicator"] = db_clean["Regional indicator"].fillna(mode_val[0])
+
+    db_clean["Happiness score"] = db_clean["Happiness score"].fillna(db_clean["Happiness score"].median())
+    db_clean["Healthy life expectancy"] = db_clean["Healthy life expectancy"].fillna(db_clean["Healthy life expectancy"].mean())
+    logger.info(f"db_clean dtype {db_clean.dtypes}")
+
+    nan_percent_new = (db_clean.isna().sum() / len(db_clean) * 100).round(1)
+    logger.info(f"nan_percent_new.sort_values\n {nan_percent_new.sort_values(ascending=False)}")
+    return db_clean
+
