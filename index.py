@@ -1,4 +1,4 @@
-from prefect import flow, task, get_run_logger
+from prefect import flow, task
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -7,9 +7,11 @@ from scipy.stats import pearsonr
 import seaborn as sns
 from pathlib import Path
 import re
+import logging
+from prefect.logging import get_run_logger
 
 
-@task(log_prints=True)
+@task(log_prints=True) # @task(log_prints=True)
 def path_csv():
     base = Path.cwd()
     folder_path = base / "csv"
@@ -18,13 +20,15 @@ def path_csv():
         raise FileNotFoundError("was not finded csv")
     return files
 
-@task(retries=3, retry_delay_seconds=2)
+@task(retries=3, retry_delay_seconds=2) # @task(retries=3, retry_delay_seconds=2)
 def read_csv_file(files):
+    logger = get_run_logger()
     df = []
     for file in files:
         if file.suffix == ".csv":
             try:
                 data = pd.read_csv(file, sep=";", on_bad_lines="skip")
+
                 year = file.stem
                 match = re.search(r"\d{4}", year)
                 if match:
@@ -33,12 +37,13 @@ def read_csv_file(files):
                 df.append(data)
             except Exception as e:
                 print(f"error: {e}")
+                logger.error(f"Error reading {file}: {e}")
     if not df:
         raise ValueError("No valid CSV files were loaded")
     
     return pd.concat(df, ignore_index=True)
 
-@task(retries=3, retry_delay_seconds=2)
+@task(retries=3, retry_delay_seconds=2) # @task(retries=3, retry_delay_seconds=2)
 def save_csv(df):
     path = Path("outputs/merged_happiness.csv")
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -6,3 +6,4 @@ seaborn
 prefect==2.14.20
 pathlib
 re
+"griffe<1.0.0"
